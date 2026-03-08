@@ -1,16 +1,290 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-<title>Code 8-3</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi người phụ nữ tôi yêu</title>
+    <!-- Import Font chữ đẹp -->
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Dancing+Script:wght@700&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* THAY ẢNH BÌA (COVER) CỦA BẠN TẠI ĐÂY, ví dụ: url('./image/background.jpg') */
+            background: url('https://github.com/LCTA0501/Code-8-3/blob/main/image.jpg?raw=true') no-repeat center 90%/cover; 
+            font-family: 'Great Vibes', cursive;
+        }
+
+        /* Lớp phủ tối để làm nổi bật nội dung */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+        }
+
+        /* Khung viền bao quanh số đếm */
+        .frame-box {
+            width: 280px;
+            height: 280px;
+            border: 3px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%; /* Bo tròn thành hình tròn hoặc để 20px nếu muốn hình vuông */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 192, 203, 0.15);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.2);
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+            overflow: hidden; /* Đảm bảo ảnh nằm gọn trong khung tròn */
+        }
+
+        /* Trang trí trái tim nhỏ quanh khung */
+        .frame-box::after { content: '❤'; position: absolute; top: 10px; right: 20px; color: #ff6b81; font-size: 2rem; animation: pulse 1s infinite; }
+        .frame-box::before { content: '❤'; position: absolute; bottom: 10px; left: 20px; color: #ff6b81; font-size: 2rem; animation: pulse 1s infinite reverse; }
+
+        .countdown-number {
+            font-size: 8rem;
+            color: #fff;
+            font-weight: bold;
+            text-shadow: 0 0 20px #ff1493;
+            position: absolute; /* Để nó không chiếm không gian ban đầu */
+            opacity: 0; 
+            transform: scale(0.5);
+            transition: all 0.5s ease;
+        }
+
+        .countdown-number.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* --- Nội dung ban đầu --- */
+        .initial-content {
+            width: 100%;
+            height: 100%;
+            transition: opacity 0.5s ease;
+        }
+
+        .profile-pic {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            /* Ảnh sẽ tự bo theo khung frame-box */
+        }
+
+        .intro-text {
+            font-size: 2.5rem; /* Giảm kích thước một chút để vừa với ảnh */
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* Nút bấm đẹp */
+        .btn-start {
+            padding: 15px 45px;
+            font-size: 2rem;
+            font-family: 'Dancing Script', cursive;
+            color: white;
+            background: linear-gradient(45deg, #ff4d6d, #ff85a3);
+            border: 2px solid white;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 77, 109, 0.5);
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: pulse-btn 2s infinite;
+            outline: none;
+        }
+
+        .btn-start:hover { transform: scale(1.1); background: linear-gradient(45deg, #ff2e55, #ff6b8b); }
+        .btn-start:active { transform: scale(0.95); }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
+        @keyframes pulse-btn { 0% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(255, 77, 109, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 77, 109, 0); } }
+
+        /* --- Nút bật/tắt nhạc --- */
+        .music-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 50px;
+            height: 50px;
+            background: rgba(255, 123, 156, 0.8);
+            color: white;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            border: 2px solid white;
+            padding: 0 20px;
+            gap: 10px;
+            font-family: 'Playfair Display', serif;
+        }
+        .music-toggle:hover { transform: scale(1.1); background: #ff7b9c; }
+
+        .music-name {
+            font-size: 1rem;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .music-name.marquee {
+            text-overflow: clip;
+            animation: marquee-scroll var(--marquee-duration, 8s) linear infinite alternate;
+        }
+        @keyframes marquee-scroll {
+            100% { transform: translateX(var(--marquee-end-x, -50px)); }
+        }
+    </style>
 </head>
+<body>
 
-<body style="font-family:sans-serif;text-align:center">
+    <!-- Nút Bật/Tắt nhạc -->
+    <div id="music-toggle-btn" class="music-toggle">
+        <i class="fas fa-volume-mute" id="music-icon"></i>
+        <span class="music-name" id="music-name">Bật nhạc</span>
+    </div>
 
-<h1>Code 8-3</h1>
+    <div class="container">
+        <div class="frame-box">
+            <!-- Nội dung ban đầu: Ảnh đại diện và chữ -->
+            <div class="initial-content" id="initialContent">
+                <!-- THAY ẢNH ĐẠI DIỆN CỦA BẠN TẠI ĐÂY -->
+                <img src="./main-1/Nguyen_thi_anh_tuyet.jpg" alt="Ảnh đại diện" class="profile-pic">
+            </div>
+            <!-- Số đếm ngược (ẩn ban đầu) -->
+            <div class="countdown-number" id="countdown">5</div>
+        </div>
+        <!-- Chữ được đưa ra ngoài khung tròn -->
+        <div class="intro-text" id="introText">Gửi người thương</div>
+        <button class="btn-start" id="btnStart">Hãy chạm vào đây</button>
+    </div>
 
-<p><a href="main-1/">Mở Main 1</a></p>
-<p><a href="main-2/">Mở Main 2</a></p>
-<p><a href="main-3/">Mở Main 3</a></p>
+    <!-- Thẻ Audio cho nhạc nền -->
+    <audio id="bgMusic" loop></audio>
 
+    <script>
+        const btn = document.getElementById('btnStart');
+        const countdownEl = document.getElementById('countdown');
+        const initialContent = document.getElementById('initialContent');
+        const introText = document.getElementById('introText');
+        let count = 5;
+
+        // --- LOGIC NHẠC NỀN ---
+        const audio = document.getElementById('bgMusic');
+        const musicToggleBtn = document.getElementById('music-toggle-btn');
+        const musicIconEl = document.getElementById('music-icon');
+        const musicNameEl = document.getElementById('music-name');
+
+        // --- THAY ĐỔI DANH SÁCH NHẠC VÀ TÊN BÀI HÁT TẠI ĐÂY ---
+        // Lưu ý: Đặt file nhạc vào thư mục music/ ngang hàng với index.html
+        const playlist = ["./music.mp3"];
+        const songTitles = [ "I LOVE YOU" ];
+        let currentSongIndex = 0;
+        let musicHasStarted = false;
+
+        function updateMusicUI() {
+            musicNameEl.textContent = songTitles[currentSongIndex];
+            musicNameEl.classList.remove('marquee');
+            musicNameEl.style.removeProperty('--marquee-end-x');
+            musicNameEl.style.removeProperty('--marquee-duration');
+            setTimeout(() => {
+                if (musicNameEl.scrollWidth > musicNameEl.clientWidth) {
+                    const overflowDistance = musicNameEl.clientWidth - musicNameEl.scrollWidth;
+                    const duration = (musicNameEl.scrollWidth / 40);
+                    musicNameEl.style.setProperty('--marquee-end-x', `${overflowDistance}px`);
+                    musicNameEl.style.setProperty('--marquee-duration', `${duration}s`);
+                    musicNameEl.classList.add('marquee');
+                }
+            }, 10);
+
+            musicIconEl.className = (!audio.paused && !audio.muted) ? 'fas fa-volume-high' : 'fas fa-volume-mute';
+        }
+
+        function playMusic() {
+            if (musicHasStarted) return;
+            musicHasStarted = true;
+            audio.src = playlist[currentSongIndex];
+            audio.play().catch(e => console.log("Lỗi phát nhạc, cần tương tác.", e));
+            updateMusicUI();
+        }
+
+        audio.addEventListener('ended', () => {
+            currentSongIndex = (currentSongIndex + 1) % playlist.length;
+            audio.src = playlist[currentSongIndex];
+            audio.play();
+            updateMusicUI();
+        });
+
+        musicToggleBtn.addEventListener('click', () => {
+            if (!musicHasStarted) {
+                playMusic(); // Nếu nhạc chưa bắt đầu, hãy bắt đầu nó
+            } else {
+                audio.paused ? audio.play() : audio.pause();
+            }
+        });
+        audio.addEventListener('play', updateMusicUI);
+        audio.addEventListener('pause', updateMusicUI);
+
+        // --- LOGIC ĐẾM NGƯỢC & CHUYỂN TRANG ---
+        btn.addEventListener('click', function() {
+            playMusic();
+            this.style.display = 'none';
+            introText.style.display = 'none'; // Ẩn dòng chữ bên ngoài
+            initialContent.style.opacity = '0';
+
+            setTimeout(() => {
+                initialContent.style.display = 'none';
+                countdownEl.classList.add('show');
+                countdownEl.innerText = count;
+
+                const timer = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        countdownEl.style.transform = 'scale(0.5)';
+                        countdownEl.style.opacity = '0';
+                        setTimeout(() => {
+                            countdownEl.innerText = count;
+                            countdownEl.style.transform = 'scale(1)';
+                            countdownEl.style.opacity = '1';
+                        }, 200);
+                    } else {
+                        clearInterval(timer);
+                        countdownEl.innerText = "❤️";
+                        setTimeout(() => { window.location.href = './main-1/index.html'; }, 800);
+                    }
+                }, 1000);
+            }, 500);
+        });
+    </script>
 </body>
 </html>
