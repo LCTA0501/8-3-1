@@ -138,15 +138,26 @@
     });
 
     let musicStarted = false;
+    audio.volume = 0; // Bắt đầu với âm lượng 0 để chuẩn bị fade-in
+
     function playMusicFadeIn() {
         if (!musicStarted) {
             audio.play().then(() => {
                 musicStarted = true;
+                // Hiệu ứng tăng âm lượng (fade-in)
+                let vol = 0;
+                const fadeIn = setInterval(() => {
+                    if (vol < 1.0) {
+                        vol = Math.min(1.0, vol + 0.05);
+                        audio.volume = vol;
+                    } else {
+                        clearInterval(fadeIn);
+                    }
+                }, 50);
                 updateMusicUI();
-                musicIconEl.className = 'fas fa-volume-high';
             }).catch(e => {
-                console.log("Chờ tương tác");
-                musicIconEl.className = 'fas fa-volume-mute';
+                console.log("Chờ tương tác để phát nhạc. Lỗi: ", e);
+                updateMusicUI(); // Cập nhật UI để hiển thị icon tắt tiếng
             });
         }
     }
@@ -154,7 +165,6 @@
     ['click', 'mousemove', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
         document.addEventListener(evt, playMusicFadeIn, { once: true });
     });
-    playMusicFadeIn();
 
     // --- HIỆU ỨNG MƯA ẢNH (10 ảnh rơi chậm 2 bên) ---
     const rainContainer = document.createElement('div');
@@ -207,6 +217,8 @@
 
     // Tạo mưa ảnh liên tục (thay vì tái sử dụng thẻ cũ gây lỗi đứng hình)
     setInterval(createRainImage, 400);
+
+    playMusicFadeIn(); // Thử phát nhạc khi tải trang
   </script>
 </body>
 

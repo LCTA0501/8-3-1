@@ -477,19 +477,6 @@
         const overlay = document.getElementById('overlay');
         const mainContent = document.getElementById('main-content');
         const audio = document.getElementById('bgMusic');
-        
-        // --- XỬ LÝ PHÁT NHẠC TỰ ĐỘNG KHI CÓ TƯƠNG TÁC ĐẦU TIÊN ---
-        // Do trình duyệt chặn tự động phát nhạc, chúng ta sẽ phát ngay khi người dùng di chuột, chạm, hoặc click lần đầu.
-        let musicHasStarted = false;
-        function playMusicOnFirstInteraction() {
-            // Nếu nhạc chưa bắt đầu hoặc đang bị tắt tiếng, hãy bật tiếng và phát
-            if (!musicHasStarted || audio.muted) {
-                musicHasStarted = true;
-                audio.muted = false; // Bật lại tiếng
-                audio.play().catch(e => console.log("Lỗi phát nhạc, cần tương tác của người dùng.", e));
-            }
-        }
-        ['mousemove', 'touchstart', 'click', 'keydown'].forEach(evt => document.addEventListener(evt, playMusicOnFirstInteraction, { once: true }));
 
         // --- DANH SÁCH NHẠC (5 BÀI PHÁT NGẪU NHIÊN) ---
         const playlist = [
@@ -610,13 +597,29 @@
 
         // --- SỰ KIỆN MỞ MÀN HÌNH ---
         document.getElementById('openGift').addEventListener('click', () => {
+            // Bắt đầu phát nhạc có tiếng khi người dùng tương tác
+            if (audio.paused || audio.muted) {
+                audio.muted = false;
+                audio.volume = 0; // Bắt đầu từ 0 để fade-in
+                audio.play().catch(e => console.error("Lỗi phát nhạc:", e));
+
+                // Hiệu ứng tăng âm lượng (fade-in)
+                let currentVolume = 0;
+                const fadeIn = setInterval(() => {
+                    if (currentVolume < 1.0) {
+                        currentVolume += 0.05;
+                        audio.volume = Math.min(currentVolume, 1.0);
+                    } else {
+                        clearInterval(fadeIn);
+                    }
+                }, 50);
+            }
+
             overlay.style.opacity = '0';
             setTimeout(() => {
                 overlay.style.display = 'none';
                 mainContent.classList.add('visible');
             }, 800);
-            // Nhạc sẽ được phát bởi sự kiện 'playMusicOnFirstInteraction' 
-            // đã được kích hoạt bởi chính cú click này, không cần gọi lại.
         });
 
         // --- HIỆU ỨNG NỔ HOA VÀ TIM KHI MỞ THƯ ---

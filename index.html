@@ -232,7 +232,7 @@
     const songTitles = [ "I LOVE YOU" ];
     let currentSongIndex = 0;
     let musicHasStarted = false; // Trạng thái: người dùng đã tương tác chưa
-
+    
     function updateMusicUI() {
         musicNameEl.textContent = songTitles[currentSongIndex];
         musicNameEl.classList.remove('marquee');
@@ -247,65 +247,58 @@
                 musicNameEl.classList.add('marquee');
             }
         }, 10);
-
-        // Cập nhật icon dựa trên trạng thái của audio
         if (!audio.paused && !audio.muted && audio.volume > 0) {
             musicIconEl.className = 'fas fa-volume-high';
         } else {
             musicIconEl.className = 'fas fa-volume-mute';
         }
     }
-
-    // 1. Thiết lập và thử phát nhạc ở chế độ tắt tiếng khi tải trang
+    
     audio.src = playlist[currentSongIndex];
     audio.loop = true;
-    audio.muted = true;
-    audio.play().catch(e => console.log("Trình duyệt đã chặn tự động phát, đang chờ người dùng tương tác."));
-    updateMusicUI(); // Cập nhật UI ban đầu
-
-    // 2. Hàm để bật nhạc có tiếng sau tương tác đầu tiên
-    function playMusicWithSound() {
-        if (musicHasStarted) return;
-        musicHasStarted = true;
-
-        audio.muted = false;
-        audio.volume = 0;
-        audio.play(); // Đảm bảo nhạc đang chạy
-
-        // Hiệu ứng tăng âm lượng (fade-in)
-        let currentVolume = 0;
-        const fadeIn = setInterval(() => {
-            if (currentVolume < 1.0) {
-                currentVolume += 0.05;
-                audio.volume = Math.min(currentVolume, 1.0);
-            } else {
-                clearInterval(fadeIn);
-            }
-        }, 50);
+    audio.volume = 0; // Bắt đầu với âm lượng 0 để chuẩn bị fade-in
+    
+    function playMusicFadeIn() {
+        if (!musicHasStarted) {
+            audio.play().then(() => {
+                musicHasStarted = true;
+                let vol = 0;
+                const fadeIn = setInterval(() => {
+                    if (vol < 1.0) { vol = Math.min(1.0, vol + 0.05); audio.volume = vol; }
+                    else { clearInterval(fadeIn); }
+                }, 50);
+                updateMusicUI();
+            }).catch(e => {
+                console.log("Chờ tương tác để phát nhạc. Lỗi: ", e);
+                updateMusicUI();
+            });
+        }
     }
 
-    // 3. Lắng nghe tương tác đầu tiên của người dùng để bật nhạc
+    // Lắng nghe tương tác đầu tiên của người dùng để bật nhạc
     ['click', 'touchstart', 'mousemove'].forEach(evt => {
-        document.addEventListener(evt, playMusicWithSound, { once: true });
+        document.addEventListener(evt, playMusicFadeIn, { once: true });
     });
 
-    // 4. Xử lý nút bật/tắt nhạc
+    // Xử lý nút bật/tắt nhạc
     musicToggleBtn.addEventListener('click', () => {
-        // Tương tác đầu tiên với nút này cũng sẽ kích hoạt playMusicWithSound()
-        // Sau đó, nó sẽ hoạt động như một nút play/pause thông thường
         if (musicHasStarted) {
-            audio.paused ? audio.play() : audio.pause();
+            if (audio.paused) {
+                audio.play();
+            } else {
+                audio.pause();
+            }
         }
+        // Nếu nhạc chưa bắt đầu, cú click này sẽ kích hoạt playMusicFadeIn() qua event listener ở trên
     });
 
-    // 5. Cập nhật UI khi trạng thái nhạc thay đổi
+    // Cập nhật UI khi trạng thái nhạc thay đổi
     audio.addEventListener('play', updateMusicUI);
     audio.addEventListener('pause', updateMusicUI);
     audio.addEventListener('volumechange', updateMusicUI); // Để cập nhật icon khi fade-in/out
 
     // --- LOGIC ĐẾM NGƯỢC & CHUYỂN TRANG ---
     btn.addEventListener('click', function() {
-        // Không cần gọi hàm playMusic() ở đây nữa vì sự kiện click đã được xử lý ở trên
         this.style.display = 'none';
         introText.style.display = 'none';
         initialContent.style.opacity = '0';
@@ -348,6 +341,9 @@
             }, 1000);
         }, 500);
     });
+
+    updateMusicUI(); // Cập nhật UI ban đầu
+    playMusicFadeIn(); // Thử phát nhạc khi tải trang
     </script>
 </body>
 </html>
